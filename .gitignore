@@ -1,0 +1,15 @@
+# Ejecutables compilados
+bin/
+/docs
+
+# Objetos y binarios sueltos
+*.o
+*.exe
+*.bin
+
+# Artefactos de LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.pdf
