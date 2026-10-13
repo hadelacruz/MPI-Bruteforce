@@ -12,8 +12,10 @@ BIN    = bin
 SEQ = $(BIN)/test_des $(BIN)/cifrar $(BIN)/secuencial
 # Programas paralelos (necesitan MPI)
 PAR = $(BIN)/bruteforce $(BIN)/cyclic $(BIN)/master_worker
+# Programa hibrido (necesita MPI + OpenMP)
+HYB = $(BIN)/hybrid
 
-all: $(SEQ) $(PAR)
+all: $(SEQ) $(PAR) $(HYB)
 
 $(BIN):
 	mkdir -p $(BIN)
@@ -35,6 +37,10 @@ $(BIN)/cyclic: $(SRC)/cyclic.c $(SRC)/des.c $(SRC)/keyutil.c | $(BIN)
 
 $(BIN)/master_worker: $(SRC)/master_worker.c $(SRC)/des.c $(SRC)/keyutil.c | $(BIN)
 	$(MPICC) $(CFLAGS) -I$(SRC) -o $@ $^
+
+# Hibrido: MPI + OpenMP (requiere -fopenmp)
+$(BIN)/hybrid: $(SRC)/hybrid.c $(SRC)/des.c $(SRC)/keyutil.c | $(BIN)
+	$(MPICC) $(CFLAGS) -fopenmp -I$(SRC) -o $@ $^
 
 clean:
 	rm -rf $(BIN)

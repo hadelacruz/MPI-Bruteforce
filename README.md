@@ -2,7 +2,7 @@
 
 Búsqueda por fuerza bruta de la llave privada DES con la que se cifró un
 texto, en versión secuencial y paralela (Open MPI). Incluye el enfoque
-"naive" y dos acercamientos alternativos.
+"naive", dos acercamientos alternativos y un extra híbrido MPI + OpenMP.
 
 ## Estructura del proyecto
 
@@ -26,6 +26,7 @@ texto, en versión secuencial y paralela (Open MPI). Incluye el enfoque
 | `bruteforce.c` | Búsqueda paralela **naive** (bloques contiguos), MPI. |
 | `cyclic.c` | **Alternativa 1**: reparto cíclico (intercalado), MPI. |
 | `master_worker.c` | **Alternativa 2**: maestro-trabajador dinámico, MPI. |
+| `hybrid.c` | **Extra**: híbrido MPI + OpenMP (cíclico multinivel). |
 
 ## Requisitos
 
@@ -34,6 +35,8 @@ texto, en versión secuencial y paralela (Open MPI). Incluye el enfoque
   En Ubuntu/WSL: `sudo apt install -y openmpi-bin libopenmpi-dev`
 - No se necesita ninguna librería de DES externa: se incluye una propia
   (`src/des.c`), que reemplaza a `<rpc/des_crypt.h>`.
+- **OpenMP** (para el programa híbrido `hybrid`) ya viene con `gcc`/`mpicc`;
+  no hay que instalar nada, solo se compila con `-fopenmp` (ya en el Makefile).
 
 > Open MPI no corre nativo en Windows. Use **WSL (Ubuntu)**, Linux o el
 > clúster del laboratorio.
@@ -84,6 +87,21 @@ mpirun -np 4 ./bin/master_worker  cifrado.bin "es una prueba de" 56   # requiere
 
 Cada programa imprime la llave encontrada, el nombre del archivo cifrado, la
 palabra clave, el texto descifrado y el tiempo de ejecución.
+
+### 4. Híbrido MPI + OpenMP (extra)
+
+Combina procesos MPI con hilos OpenMP (`N` procesos × `T` hilos). `T` se fija
+con `OMP_NUM_THREADS`:
+
+```bash
+# 2 procesos MPI x 4 hilos cada uno:
+OMP_NUM_THREADS=4 mpirun --bind-to none -np 2 ./bin/hybrid cifrado.bin "es una prueba de" 20
+```
+
+> **`--bind-to none` es obligatorio**: sin él, Open MPI fija cada proceso a un
+> solo núcleo y los hilos OpenMP no se reparten (no habría *speedup*). Mantenga
+> `procesos × hilos ≤` núcleos disponibles. En una sola máquina el híbrido
+> empata (no supera) al MPI puro; su ventaja real es en un clúster (ver informe).
 
 ### Pruebas oficiales (Parte B.2)
 
